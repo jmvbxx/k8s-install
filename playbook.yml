@@ -27,10 +27,49 @@
       path: /etc/apt/sources.list
       line: "deb [arch=amd64 signed-by=/etc/apt/keyrings/kubernetes.gpg] http://apt.kubernetes.io/ kubernetes-xenial main"
 
+  - name: Run 'apt update'
+    ansible.builtin.apt:
+      update_cache: yes
+      cache_valid_time: 3600
+
   - name: Install Kubernetes
     ansible.builtin.apt:
-      update_cache: true
       pkg:
       - kubeadm
       - kubelet
       - kubectl
+
+  - name: Apt-mark hold the Kubernetes packages
+    ansible.builtin.shell: sudo apt-mark hold kubeadm kubelet kubectl
+
+  - name: Disable swap spaces
+    ansible.builtin.shell: sudo swapoff -a
+
+  - name: Add required containerd modules to config file
+    ansible.builtin.copy:
+      dest: /etc/modules-load.d/containerd.conf
+      content: |
+        overlay
+        br_netfilter
+
+  - name: Add required kernel modules
+    community.general.modprobe:
+      name: "{{ modules }}"
+      persistent: present
+    vars:
+      modules:
+        - overlay
+        - br_netfilter
+
+  - name: Generate, and populate, kubernetes.conf file
+    ansible.builtin.copy:
+      dest: /etc/sysctl.d/kubernetes.conf
+      content: |
+        net.bridge.bridge-nf-call-ip6tables = 1
+        net.bridge.bridge-nf-call-iptables = 1
+        net.ipv4.ip_forward = 1
+
+  - name: Reload configuration
+    ansible.builtin.shell: sudo sysctl --system
+
+  
