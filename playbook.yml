@@ -20,7 +20,7 @@
 
   - name: Curl and download Kubernetes GPG key
     ansible.builtin.command:
-      cmd: curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes.gpg
+      cmd: "curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes.gpg"
     when: not gpg_result.stat.exists
 
   - name: Check if Kubernetes repository appears in list
