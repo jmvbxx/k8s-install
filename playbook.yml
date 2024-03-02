@@ -1,45 +1,47 @@
 ---
-- name: Install docker
-  ansible.builtin.apt:
-    name: docker.io
+- hosts: all
+  become: yes
+  tasks:
+  - name: Install docker
+    ansible.builtin.apt:
+      name: docker.io
 
-- name: Enable and start docker
-  ansible.builtin.systemd_service:
-    state: started
-    enabled: true
-    name: docker
+  - name: Enable and start docker
+    ansible.builtin.systemd_service:
+      state: started
+      enabled: true
+      name: docker
 
-- name: Check if Kubernetes GPG key exists
-  stat:
-    path: "/etc/apt/keyrings/kubernetes.gpg"
-  register: gpg_result
+  - name: Check if Kubernetes GPG key exists
+    stat:
+      path: "/etc/apt/keyrings/kubernetes.gpg"
+    register: gpg_result
 
-- name: Curl and download Kubernetes GPG key
-  ansible.builtin.command:
-    cmd: curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes.gpg
-  when: not gpg_result.stat.exists
+  - name: Curl and download Kubernetes GPG key
+    ansible.builtin.command:
+      cmd: curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes.gpg
+    when: not gpg_result.stat.exists
 
-- name: Check if Kubernetes repository appears in list
-  lineinfile:
-    path: /etc/apt/sources.list
-    line: "deb [arch=amd64 signed-by=/etc/apt/keyrings/kubernetes.gpg] http://apt.kubernetes.io/ kubernetes-xenial main"
-    state: present
-  check_mode: yes
-  register: repo_result
+  - name: Check if Kubernetes repository appears in list
+    lineinfile:
+      path: /etc/apt/sources.list
+      line: "deb [arch=amd64 signed-by=/etc/apt/keyrings/kubernetes.gpg] http://apt.kubernetes.io/ kubernetes-xenial main"
+      state: present
+    check_mode: yes
+    register: repo_result
 
-- name: Add Kubernetes software repositories
-  ansible.builtin.command:
-    cmd: echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/kubernetes.gpg] http://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list
-  when: not repo_result.stat.exists
+  - name: Add Kubernetes software repositories
+    ansible.builtin.command:
+      cmd: echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/kubernetes.gpg] http://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list
+    when: not repo_result.stat.exists
 
-- name: Install Kubernetes
-  ansible.builtin.apt:
-    update_cache: true
-    name: "{{ packages }}"
-    allow_change_held_packages: true
-  vars:
-    packages:
-      - kubeadm
-      - kubelet
-      - kubectl
-
+  - name: Install Kubernetes
+    ansible.builtin.apt:
+      update_cache: true
+      name: "{{ packages }}"
+      allow_change_held_packages: true
+    vars:
+      packages:
+        - kubeadm
+        - kubelet
+        - kubectl
