@@ -53,14 +53,11 @@
         overlay
         br_netfilter
 
-  - name: Add required kernel modules
-    community.general.modprobe:
-      name: "{{ modules }}"
-#      persistent: present
-    vars:
-      modules:
-        - overlay
-        - br_netfilter
+  - name: Load overlay kernel module
+    ansible.builtin.shell: sudo modprobe overlay
+
+  - name: Load br_netfilter kernel module
+    ansible.builtin.shell: sudo modprobe br_netfilter
 
   - name: Generate, and populate, kubernetes.conf file
     ansible.builtin.copy:
@@ -73,4 +70,3 @@
   - name: Reload configuration
     ansible.builtin.shell: sudo sysctl --system
 
-  
